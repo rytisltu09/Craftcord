@@ -31,17 +31,8 @@ CraftCord is a good fit if you want to:
 
 ### 1. Install Dependencies
 
-From your project root:
-
-```bash
-python -m pip install -e ".[dev,discord]"
-```
-
-If you only need runtime dependencies:
-
-```bash
-python -m pip install "craftcord[discord]"
-```
+From your virtual environment
+`pip install craftcord`
 
 ### 2. Configure Environment Variables
 
