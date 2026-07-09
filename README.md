@@ -1,6 +1,7 @@
 # CraftCord
 
 CraftCord is a Python SDK for Discord bot developers who want to connect their bot to Minecraft.
+It is directly used with Craftcord plugin, you can find it in https://github.com/rytisltu09/CraftcordPlugin
 
 If you are new, the fastest way to understand CraftCord is:
 
