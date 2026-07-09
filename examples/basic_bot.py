@@ -9,8 +9,8 @@ import os
 from typing import Any
 
 import discord
-from dotenv import load_dotenv
 from discord.ext import commands
+from dotenv import load_dotenv
 
 from craftcord import Client
 from craftcord.core.config import ClientConfig
