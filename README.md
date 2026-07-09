@@ -1,95 +1,94 @@
 # CraftCord
 
-CraftCord is a Python SDK for Discord bot developers who want to connect their bot to Minecraft.
-It is to be used with Craftcord plugin, you can find it in https://github.com/rytisltu09/CraftcordPlugin
+**CraftCord is an asynchronous Python SDK for communicating with Minecraft Paper servers through the CraftCordPlugin.**
 
-IT IS HIGHLY RECOMMENDED THAT YOU SETUP YOUR CRAFTCORD PLUGIN FIRST BEFORE CONTINUING!
+It enables Python applications to interact with Minecraft using a simple, high-level API over HTTP or WebSockets.
 
-If you are new, the fastest way to understand CraftCord is:
+Whether you're building a Discord bot, web dashboard, desktop application, mobile app, automation service, or another custom integration, CraftCord provides a clean and modern interface for interacting with your Minecraft server.
 
-1. Run the example bot.
-2. Use `!mc_online` in Discord.
-3. See Minecraft player data in your Discord channel.
+> **Note**
+>
+> CraftCord requires the **CraftCordPlugin** to be installed on your Paper server.
+>
+> Plugin Repository:
+> https://github.com/rytisltu09/CraftcordPlugin
 
-## Who This Is For
+---
 
-CraftCord is a good fit if you want to:
+# Why CraftCord?
 
-- build a Discord bot in Python
-- read Minecraft server events
-- run Minecraft actions from Discord commands
-- keep bot logic clean and reusable
+CraftCord removes the complexity of talking directly to a Minecraft server.
 
-## What You Get
+Instead of implementing HTTP requests, WebSocket connections, authentication, and event parsing yourself, CraftCord provides an intuitive Python API.
 
-- async Python client (`Client`)
-- two transport options: WebSocket or HTTP
-- typed Minecraft events and models
-- CraftCord command system (`@client.command`)
-- Discord adapter for `discord.py` (`DiscordPyAdapter`)
-- plugin system (`client.plugins.load(...)`)
+With only a few lines of code you can:
 
-## Beginner 5-Minute Setup
+- Retrieve online players
+- Execute Minecraft commands
+- Send chat messages
+- Listen for live server events
+- Build integrations with any Python application
 
-### 1. Install Dependencies
+---
 
-From your virtual environment
+# Perfect For
+
+CraftCord is suitable for:
+
+- Discord bots
+- Web dashboards
+- Desktop applications
+- Mobile applications
+- Automation tools
+- Monitoring systems
+- Economy integrations
+- Administrative panels
+- Any custom Python application
+
+---
+
+# Features
+
+- Asynchronous Python API
+- HTTP and WebSocket transports
+- Typed Minecraft models
+- Event system
+- Built-in command framework
+- Plugin/extension system
+- Automatic authentication
+- Discord.py adapter
+- Clean developer-friendly API
+
+---
+
+# Installation
+
 ```bash
 pip install craftcord
 ```
 
-### 2. Configure Environment Variables
+---
 
-Set these before running `examples/basic_bot.py`:
+# Quick Start
 
-- `DISCORD_TOKEN` (required)
-- `CRAFTCORD_HOST` (default: `127.0.0.1`)
-- `CRAFTCORD_PORT` (default: `8080`)
-- `CRAFTCORD_TOKEN` (default: `secret`)
-- `CRAFTCORD_TRANSPORT` (`ws` or `http`, default: `ws`)
-- `CRAFTCORD_DEFAULT_CHANNEL` (optional Discord channel id)
-
-Example:
+## 1. Configure Environment Variables
 
 ```bash
-export DISCORD_TOKEN="your-discord-bot-token"
 export CRAFTCORD_HOST="127.0.0.1"
 export CRAFTCORD_PORT="8080"
-export CRAFTCORD_TOKEN="secret"
+export CRAFTCORD_TOKEN="your-api-token"
 export CRAFTCORD_TRANSPORT="ws"
 ```
 
-### 3. Start The Bot
+If you're using the Discord.py adapter, also configure:
 
 ```bash
-python examples/basic_bot.py
+export DISCORD_TOKEN="your-discord-token"
 ```
 
-### 4. Test It In Discord
+---
 
-In a channel where your bot can read and send messages, run:
-
-```text
-!mc_online
-```
-
-If everything is connected, the bot responds with online player names.
-
-## How Commands Work (Simple Mental Model)
-
-- `@bot.command` is Discord-facing.
-- `@client.command` is CraftCord-facing shared logic.
-
-Typical flow:
-
-1. User types a Discord command like `!mc_online`.
-2. Discord handler calls `await client.invoke_command("online")`.
-3. CraftCord command runs and returns data.
-4. Discord handler sends the result back to chat.
-
-This is why you avoid duplicating business logic.
-
-## Minimal Example
+## 2. Minimal Example
 
 ```python
 import asyncio
@@ -97,13 +96,19 @@ import asyncio
 from craftcord import Client
 
 
-async def main() -> None:
-    client = Client(host="127.0.0.1", port=8080, token="secret")
+async def main():
+    client = Client(
+        host="127.0.0.1",
+        port=8080,
+        token="secret"
+    )
 
     @client.command("online")
-    async def online_players() -> list[str]:
-        players = await client.minecraft.players()
-        return [player.username for player in players]
+    async def online():
+        return [
+            player.username
+            for player in await client.minecraft.players()
+        ]
 
     await client.start()
 
@@ -111,97 +116,193 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-## Minecraft Features Available
+---
 
-From `client.minecraft`:
+# Minecraft API
 
-- `players()` / `get_players()`
-- `server_info()` / `get_server_info()`
-- `send_message(message, target=None)`
-- `execute(command)`
-- `kick(username, reason=None)`
-- `ban(username, reason=None)`
+The `client.minecraft` service exposes high-level methods.
 
-## Events You Can Listen To
+## Players
 
-Typed built-in events include:
-
-- `player_join`
-- `player_leave`
-- `player_chat`
-- `player_death`
-- `server_start`
-- `server_stop`
-
-Unknown event names arrive as `GenericEvent`.
-
-## Transport Choice
-
-- Use `ws` for real-time events and long-running bot sessions.
-- Use `http` for simple request/response integrations.
-
-Set with:
-
-```bash
-export CRAFTCORD_TRANSPORT="ws"
+```python
+await client.minecraft.players()
+await client.minecraft.get_players()
 ```
 
-or
+## Server Information
 
-```bash
-export CRAFTCORD_TRANSPORT="http"
+```python
+await client.minecraft.server_info()
+await client.minecraft.get_server_info()
 ```
 
-## Troubleshooting
+## Chat
 
-### Bot starts but keeps retrying WebSocket
+```python
+await client.minecraft.send_message("Hello!")
+await client.minecraft.send_message(
+    "Welcome!",
+    target="Steve"
+)
+```
 
-Cause: CraftCord API endpoint is not reachable.
+## Commands
 
-Check:
+```python
+await client.minecraft.execute("time set day")
+```
 
-1. Is your Java-side CraftCord plugin/API running?
-2. Do `CRAFTCORD_HOST`, `CRAFTCORD_PORT`, and `CRAFTCORD_TOKEN` match?
-3. If your server only supports HTTP, set `CRAFTCORD_TRANSPORT=http`.
+## Moderation
 
-### Discord command does not trigger
+```python
+await client.minecraft.kick("Steve")
 
-Check:
+await client.minecraft.ban(
+    "Steve",
+    reason="Griefing"
+)
+```
 
-1. Message Content Intent is enabled in Discord Developer Portal.
-2. Bot has permission to read and send in that channel.
-3. You are using the right prefix (`!`) and command (`!mc_online`).
+---
 
-### Import or dataclass errors on Python 3.14
+# Events
 
-Use the latest code in this repository. Recent updates include Python 3.14 compatibility fixes for event dataclasses.
+Subscribe to real-time Minecraft events.
 
-## Plugin System
+```python
+@client.on("player_join")
+async def joined(event):
+    print(event.player.username)
+```
 
-Extensions are classes with `setup(client)` and optional `teardown(client)`.
+Built-in events:
+
+- player_join
+- player_leave
+- player_chat
+- player_death
+- server_start
+- server_stop
+
+Unknown events are delivered as `GenericEvent`.
+
+---
+
+# Commands
+
+CraftCord provides its own command framework.
+
+```python
+@client.command("online")
+async def online():
+    ...
+```
+
+This allows business logic to remain independent of Discord or any other frontend.
+
+For example:
+
+Discord command
+
+↓
+
+CraftCord command
+
+↓
+
+Minecraft
+
+---
+
+# Plugin System
+
+Extensions can register commands and event listeners.
 
 ```python
 class GreetingExtension:
-    async def setup(self, client) -> None:
+
+    async def setup(self, client):
+
         @client.on("player_join")
-        async def greet(event) -> None:
-            await client.minecraft.send_message(f"Welcome {event.player.username}!")
+        async def greet(event):
+
+            await client.minecraft.send_message(
+                f"Welcome {event.player.username}!"
+            )
 
 
-await client.plugins.load(GreetingExtension())
+await client.plugins.load(
+    GreetingExtension()
+)
 ```
 
-## Protocol Contract (For Java Plugin Authors)
+---
 
-Expected API behavior:
+# Transport
 
-- Bearer token auth for HTTP and WebSocket
-- WebSocket action: `auth.validate`
-- HTTP endpoint: `GET /api/v1/auth/validate`
-- HTTP endpoint: `POST /api/v1/rpc`
-- WebSocket event envelope support
+CraftCord supports two transport protocols.
 
-Request envelope:
+## WebSocket
+
+Recommended for:
+
+- Discord bots
+- Dashboards
+- Live monitoring
+- Event-driven applications
+
+```bash
+export CRAFTCORD_TRANSPORT=ws
+```
+
+## HTTP
+
+Recommended for:
+
+- Scripts
+- Cron jobs
+- Simple integrations
+
+```bash
+export CRAFTCORD_TRANSPORT=http
+```
+
+---
+
+# Troubleshooting
+
+## Connection retries
+
+Verify:
+
+- CraftCordPlugin is running.
+- Host and port are correct.
+- API token matches.
+- Firewall allows the connection.
+
+---
+
+## Discord commands do not respond
+
+If you're using the Discord adapter:
+
+- Enable Message Content Intent.
+- Verify bot permissions.
+- Check your command prefix.
+
+---
+
+# Protocol
+
+CraftCord communicates using authenticated JSON RPC over HTTP or WebSockets.
+
+Authentication:
+
+- Bearer Token
+- HTTP validation endpoint
+- WebSocket authentication
+
+Example request:
 
 ```json
 {
@@ -212,36 +313,9 @@ Request envelope:
 }
 ```
 
-Response envelope:
+---
 
-```json
-{
-  "type": "response",
-  "id": "uuid",
-  "status": "ok",
-  "data": {}
-}
-```
-
-Event envelope:
-
-```json
-{
-  "type": "event",
-  "event": "player_join",
-  "data": {
-    "player": {
-      "uuid": "3b5e4f2d-8e34-4ad1-848f-b9d66fd07a4f",
-      "username": "Alex",
-      "health": 20.0,
-      "world": "world",
-      "location": {"x": 0.0, "y": 64.0, "z": 0.0}
-    }
-  }
-}
-```
-
-## Development
+# Development
 
 Run tests:
 
@@ -249,17 +323,25 @@ Run tests:
 pytest
 ```
 
-Run lint:
+Run Ruff:
 
 ```bash
 ruff check .
 ```
 
-## Repository Layout
+---
 
-```text
+# Repository Structure
+
+```
 craftcord/
 docs/
 examples/
 tests/
 ```
+
+---
+
+# License
+
+MIT License.
