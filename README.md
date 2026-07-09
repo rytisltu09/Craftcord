@@ -32,7 +32,8 @@ CraftCord is a good fit if you want to:
 ### 1. Install Dependencies
 
 From your virtual environment
-```pip install craftcord```
+```bash
+pip install craftcord```
 
 ### 2. Configure Environment Variables
 
