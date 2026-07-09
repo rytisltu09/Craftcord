@@ -33,7 +33,8 @@ CraftCord is a good fit if you want to:
 
 From your virtual environment
 ```bash
-pip install craftcord```
+pip install craftcord
+```
 
 ### 2. Configure Environment Variables
 
