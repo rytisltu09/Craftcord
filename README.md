@@ -1,6 +1,6 @@
 # CraftCord
 
-**CraftCord is an asynchronous Python SDK for communicating with Minecraft Paper servers through the CraftCordPlugin.**
+**CraftCord** is an asynchronous Python SDK for communicating with Minecraft Paper servers through **CraftCordPlugin**.
 
 It enables Python applications to interact with Minecraft using a simple, high-level API over HTTP or WebSockets.
 
@@ -56,8 +56,8 @@ CraftCord is suitable for:
 - Built-in command framework
 - Plugin/extension system
 - Automatic authentication
-- Discord.py adapter
-- Clean developer-friendly API
+- `discord.py` adapter
+- Clean, developer-friendly API
 
 ---
 
@@ -80,27 +80,43 @@ export CRAFTCORD_TOKEN="your-api-token"
 export CRAFTCORD_TRANSPORT="ws"
 ```
 
-### Local vs Global Plugin Exposure
+---
 
-The Java CraftCord plugin now controls network exposure with:
+## Local vs Global Plugin Exposure
 
-- `bindMode=local` -> plugin binds to `127.0.0.1` (same machine only)
-- `bindMode=global` -> plugin binds to `0.0.0.0` (all interfaces)
-- `host=<non-empty-ip-or-hostname>` -> overrides `bindMode` and binds that specific interface
+CraftCordPlugin supports different network exposure modes.
 
-SDK connection guidance:
+### Plugin Configuration
 
-- Client targets must be reachable from where your Python app runs.
-- Do not use `0.0.0.0` as a client target address. It is a server bind wildcard, not a routable destination.
-- API endpoints and paths are unchanged (`/api/v1/*`, `/ws`).
+The Java plugin controls how it binds to the network:
 
-Use these connection URLs as a reference:
+- `bindMode=local` → binds to `127.0.0.1` (localhost only)
+- `bindMode=global` → binds to `0.0.0.0` (all interfaces)
+- `host=<ip-or-hostname>` → overrides `bindMode` and binds to a specific interface
 
-- Local same-machine: `http://127.0.0.1:8080/api/v1`
-- LAN client: `http://<server-lan-ip>:8080/api/v1`
-- Reverse proxy/public endpoint: `https://craftcord.example.com/api/v1`
+### SDK Connection Guidance
 
-Plugin startup logs now include binding type (`local-only`, `global-all-interfaces`, or `specific-interface`) so you can confirm exposure mode quickly.
+Your Python application should always connect to a **reachable address**.
+
+> **Do not use `0.0.0.0` as `CRAFTCORD_HOST`.**
+>
+> `0.0.0.0` is a server bind address, **not** a valid client destination.
+
+Example connection URLs:
+
+| Deployment | URL |
+|------------|-----|
+| Same machine | `http://127.0.0.1:8080/api/v1` |
+| Local network | `http://<server-lan-ip>:8080/api/v1` |
+| Public / Reverse Proxy | `https://craftcord.example.com/api/v1` |
+
+When the plugin starts, it logs whether it is running in:
+
+- Local-only mode
+- Global mode
+- Specific-interface mode
+
+allowing you to verify the network configuration immediately.
 
 ---
 
@@ -121,10 +137,8 @@ async def main():
 
     @client.command("online")
     async def online():
-        return [
-            player.username
-            for player in await client.minecraft.players()
-        ]
+        players = await client.minecraft.players()
+        return [player.username for player in players]
 
     await client.start()
 
@@ -136,7 +150,7 @@ asyncio.run(main())
 
 # Minecraft API
 
-The `client.minecraft` service exposes high-level methods.
+The `client.minecraft` service exposes several high-level methods.
 
 ## Players
 
@@ -156,6 +170,7 @@ await client.minecraft.get_server_info()
 
 ```python
 await client.minecraft.send_message("Hello!")
+
 await client.minecraft.send_message(
     "Welcome!",
     target="Steve"
@@ -183,7 +198,7 @@ await client.minecraft.ban(
 
 # Events
 
-Subscribe to real-time Minecraft events.
+Subscribe to live Minecraft events.
 
 ```python
 @client.on("player_join")
@@ -191,7 +206,7 @@ async def joined(event):
     print(event.player.username)
 ```
 
-Built-in events:
+Built-in events include:
 
 - `player_join`
 - `player_leave`
@@ -200,64 +215,99 @@ Built-in events:
 - `server_start`
 - `server_stop`
 
-Unknown event names arrive as `GenericEvent`.
+Unknown events are delivered as `GenericEvent`.
 
-## Transport Choice
+---
 
-- Use `ws` for real-time events and long-running bot sessions.
-- Use `http` for simple request/response integrations.
+# Transport Choice
 
-Set with:
+CraftCord supports two transport methods.
+
+## WebSocket (`ws`)
+
+Recommended for:
+
+- Discord bots
+- Dashboards
+- Monitoring applications
+- Real-time event streaming
 
 ```bash
 export CRAFTCORD_TRANSPORT="ws"
 ```
 
-or
+## HTTP (`http`)
+
+Recommended for:
+
+- Scripts
+- Cron jobs
+- One-off integrations
+- Request/response applications
 
 ```bash
 export CRAFTCORD_TRANSPORT="http"
 ```
 
-## Troubleshooting
+---
 
-### Connection refused or timeout
+# Troubleshooting
 
-Check this order:
+## Connection Refused or Timeout
 
-1. Verify Java plugin `bindMode` and optional `host` values.
-2. Confirm your SDK `CRAFTCORD_HOST` points to a reachable address from the client machine.
-3. Never set SDK `CRAFTCORD_HOST` to `0.0.0.0`.
-4. Verify `CRAFTCORD_PORT` and `CRAFTCORD_TOKEN` match plugin config.
-5. Ensure host firewall rules allow inbound traffic on the plugin port.
-6. For LAN/WAN access, verify NAT/port-forwarding and routing.
-7. If using a reverse proxy, ensure `/api/v1/*` and `/ws` route to the plugin upstream.
+Verify the following:
 
-### Bot starts but keeps retrying WebSocket
+1. The Java plugin is running.
+2. `bindMode` and `host` are configured correctly.
+3. `CRAFTCORD_HOST` points to a reachable address.
+4. **Never** use `0.0.0.0` as the SDK host.
+5. `CRAFTCORD_PORT` matches the plugin configuration.
+6. `CRAFTCORD_TOKEN` matches the plugin configuration.
+7. Firewall rules allow inbound connections.
+8. If accessing remotely, verify routing and port forwarding.
+9. If using a reverse proxy, ensure `/api/v1/*` and `/ws` are forwarded correctly.
 
-Cause: CraftCord API endpoint is not reachable.
+---
 
-Check:
+## WebSocket Keeps Reconnecting
 
-1. Is your Java-side CraftCord plugin/API running?
-2. Do `CRAFTCORD_HOST`, `CRAFTCORD_PORT`, and `CRAFTCORD_TOKEN` match?
-3. If your server only supports HTTP, set `CRAFTCORD_TRANSPORT=http`.
-
-### Discord command does not trigger
+This usually means the SDK cannot reach the CraftCordPlugin.
 
 Check:
 
-1. Message Content Intent is enabled in Discord Developer Portal.
-2. Bot has permission to read and send in that channel.
-3. You are using the right prefix (`!`) and command (`!mc_online`).
+- Is the plugin running?
+- Are the host and port correct?
+- Does the API token match?
+- Is WebSocket enabled?
+- If the server only exposes HTTP, set:
 
-### Import or dataclass errors on Python 3.14
+```bash
+export CRAFTCORD_TRANSPORT="http"
+```
 
-Use the latest code in this repository. Recent updates include Python 3.14 compatibility fixes for event dataclasses.
+---
 
-## Plugin System
+## Discord Commands Don't Work
 
-Extensions can register commands and event listeners.
+If you're using the built-in `discord.py` adapter:
+
+- Enable the **Message Content Intent**.
+- Ensure the bot has permission to read and send messages.
+- Verify your command prefix.
+
+---
+
+## Python 3.14 Compatibility
+
+If you encounter dataclass or import issues, update to the latest version of CraftCord.
+
+Recent releases include Python 3.14 compatibility improvements.
+
+---
+
+# Plugin System
+
+Extensions allow reusable commands and event listeners.
 
 ```python
 class GreetingExtension:
@@ -272,58 +322,41 @@ class GreetingExtension:
             )
 
 
-await client.plugins.load(
-    GreetingExtension()
-)
-```
-
-## Protocol Contract (For Java Plugin Authors)
-
-## Migration Note (Plugin Networking Update)
-
-- New plugin exposure options: `bindMode` (`local|global`) and optional `host` override.
-- SDK API contract is unchanged: endpoints remain `/api/v1/auth/validate`, `/api/v1/rpc`, and `/ws`.
-- Existing users with explicit SDK host/port configuration continue to work unchanged.
-- SDK now rejects `0.0.0.0` as a client target host with a clear validation error.
-
-Expected API behavior:
-
-- Scripts
-- Cron jobs
-- Simple integrations
-
-```bash
-export CRAFTCORD_TRANSPORT=http
+await client.plugins.load(GreetingExtension())
 ```
 
 ---
 
-# Troubleshooting
+# Protocol Contract
 
-## Connection retries
+## Migration Notes
 
-Verify:
+Recent versions introduce improved network binding.
 
-- CraftCordPlugin is running.
-- Host and port are correct.
-- API token matches.
-- Firewall allows the connection.
+### Plugin Changes
+
+- Added `bindMode` (`local` or `global`)
+- Added optional `host` override
+
+### SDK Changes
+
+The SDK API remains unchanged.
+
+Endpoints are still:
+
+- `/api/v1/auth/validate`
+- `/api/v1/rpc`
+- `/ws`
+
+Existing applications continue working without modification.
+
+The SDK now validates `CRAFTCORD_HOST` and rejects `0.0.0.0` as an invalid destination.
 
 ---
 
-## Discord commands do not respond
+## Protocol
 
-If you're using the Discord adapter:
-
-- Enable Message Content Intent.
-- Verify bot permissions.
-- Check your command prefix.
-
----
-
-# Protocol
-
-CraftCord communicates using authenticated JSON RPC over HTTP or WebSockets.
+CraftCord communicates using authenticated JSON-RPC over HTTP and WebSockets.
 
 Authentication:
 
@@ -362,15 +395,15 @@ ruff check .
 
 # Repository Structure
 
-```
+```text
 craftcord/
-docs/
-examples/
-tests/
+├── docs/
+├── examples/
+└── tests/
 ```
 
 ---
 
 # License
 
-MIT License.
+This project is licensed under the **MIT License**.
