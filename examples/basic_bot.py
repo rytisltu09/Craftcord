@@ -9,8 +9,8 @@ import os
 from typing import Any
 
 import discord
-from dotenv import load_dotenv
 from discord.ext import commands
+from dotenv import load_dotenv
 
 from craftcord import Client
 from craftcord.core.config import ClientConfig
@@ -26,8 +26,8 @@ logger = logging.getLogger("craftcord.examples.basic_bot")
 
 load_dotenv("basic_bot.env")
 CRAFTCORD_DEFAULT_CHANNEL = os.getenv("CRAFTCORD_DEFAULT_CHANNEL")
-CRAFTCORD_HOST = os.getenv("CRAFTCORD_HOST", "localhost")
-CRAFTCORD_PORT = int(os.getenv("CRAFTCORD_PORT", "25565"))
+CRAFTCORD_HOST = os.getenv("CRAFTCORD_HOST", "127.0.0.1")
+CRAFTCORD_PORT = int(os.getenv("CRAFTCORD_PORT", "8080"))
 CRAFTCORD_TOKEN = os.getenv("CRAFTCORD_TOKEN")
 CRAFTCORD_TRANSPORT = os.getenv("CRAFTCORD_TRANSPORT", "ws")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")

@@ -63,6 +63,28 @@ export CRAFTCORD_TOKEN="secret"
 export CRAFTCORD_TRANSPORT="ws"
 ```
 
+### Local vs Global Plugin Exposure
+
+The Java CraftCord plugin now controls network exposure with:
+
+- `bindMode=local` -> plugin binds to `127.0.0.1` (same machine only)
+- `bindMode=global` -> plugin binds to `0.0.0.0` (all interfaces)
+- `host=<non-empty-ip-or-hostname>` -> overrides `bindMode` and binds that specific interface
+
+SDK connection guidance:
+
+- Client targets must be reachable from where your Python app runs.
+- Do not use `0.0.0.0` as a client target address. It is a server bind wildcard, not a routable destination.
+- API endpoints and paths are unchanged (`/api/v1/*`, `/ws`).
+
+Use these connection URLs as a reference:
+
+- Local same-machine: `http://127.0.0.1:8080/api/v1`
+- LAN client: `http://<server-lan-ip>:8080/api/v1`
+- Reverse proxy/public endpoint: `https://craftcord.example.com/api/v1`
+
+Plugin startup logs now include binding type (`local-only`, `global-all-interfaces`, or `specific-interface`) so you can confirm exposure mode quickly.
+
 ### 3. Start The Bot
 
 ```bash
@@ -158,6 +180,18 @@ export CRAFTCORD_TRANSPORT="http"
 
 ## Troubleshooting
 
+### Connection refused or timeout
+
+Check this order:
+
+1. Verify Java plugin `bindMode` and optional `host` values.
+2. Confirm your SDK `CRAFTCORD_HOST` points to a reachable address from the client machine.
+3. Never set SDK `CRAFTCORD_HOST` to `0.0.0.0`.
+4. Verify `CRAFTCORD_PORT` and `CRAFTCORD_TOKEN` match plugin config.
+5. Ensure host firewall rules allow inbound traffic on the plugin port.
+6. For LAN/WAN access, verify NAT/port-forwarding and routing.
+7. If using a reverse proxy, ensure `/api/v1/*` and `/ws` route to the plugin upstream.
+
 ### Bot starts but keeps retrying WebSocket
 
 Cause: CraftCord API endpoint is not reachable.
@@ -196,6 +230,13 @@ await client.plugins.load(GreetingExtension())
 ```
 
 ## Protocol Contract (For Java Plugin Authors)
+
+## Migration Note (Plugin Networking Update)
+
+- New plugin exposure options: `bindMode` (`local|global`) and optional `host` override.
+- SDK API contract is unchanged: endpoints remain `/api/v1/auth/validate`, `/api/v1/rpc`, and `/ws`.
+- Existing users with explicit SDK host/port configuration continue to work unchanged.
+- SDK now rejects `0.0.0.0` as a client target host with a clear validation error.
 
 Expected API behavior:
 

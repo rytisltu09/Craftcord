@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "craftcord"
-version = "0.1.0"
+version = "0.1.8"
 description = "Async Python SDK for connecting Discord bots and automation to Minecraft servers through a CraftCord plugin API."
 readme = "README.md"
 requires-python = ">=3.12"

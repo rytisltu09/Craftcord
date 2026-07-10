@@ -20,6 +20,16 @@ class ClientConfig:
     user_agent: str = "craftcord/0.1.0"
     headers: dict[str, str] = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        self.host = self.host.strip()
+        if not self.host:
+            raise ValueError("host must be a non-empty hostname or IP address")
+        if self.host == "0.0.0.0":
+            raise ValueError(
+                "Invalid client host '0.0.0.0': use a reachable plugin address "
+                "such as 127.0.0.1, a LAN IP, or a DNS hostname."
+            )
+
     @property
     def ws_url(self) -> str:
         scheme = "wss" if self.secure else "ws"

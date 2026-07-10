@@ -8,7 +8,7 @@ from craftcord.transport.http import HTTPTransport
 
 async def main() -> None:
     client = Client(
-        host="localhost",
+        host="127.0.0.1",
         port=8080,
         token="secret",
         transport=HTTPTransport,
