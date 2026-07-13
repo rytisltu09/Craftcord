@@ -9,14 +9,14 @@ import os
 from typing import Any
 
 import discord
+from discord.abc import Messageable
 from discord.ext import commands
 from dotenv import load_dotenv
 
 from craftcord import Client
 from craftcord.core.config import ClientConfig
 from craftcord.core.events import BaseEvent, GenericEvent
-from craftcord.discord.discordpy import DiscordPyAdapter
-from craftcord.minecraft.events import PlayerChatEvent, PlayerJoinEvent
+from craftcord.minecraft.events import PlayerChatEvent, PlayerJoinEvent, ServerStartEvent
 from craftcord.minecraft.models import ServerInfo
 from craftcord.transport.http import HTTPTransport
 
@@ -39,32 +39,17 @@ intents.messages = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
-async def _discord_command_responder(command_name: str, result: Any) -> None:
-    if CRAFTCORD_DEFAULT_CHANNEL is None:
-        return
-    await craft.discord.send(f"command `{command_name}` result: {result}")
+def _default_channel_id() -> int | None:
+    if not CRAFTCORD_DEFAULT_CHANNEL:
+        return None
+    return int(CRAFTCORD_DEFAULT_CHANNEL)
 
 
-async def _discord_event_forwarder(event: BaseEvent) -> None:
-    if CRAFTCORD_DEFAULT_CHANNEL is None:
-        return
-
-    if isinstance(event, PlayerJoinEvent):
-        await craft.discord.send(f"{event.player.username} joined Minecraft")
-        return
-    if isinstance(event, PlayerChatEvent):
-        await craft.discord.send(f"<{event.player.username}> {event.message}")
-        return
-
-    await craft.discord.send(f"minecraft event: {event.name}")
-
-
-adapter = DiscordPyAdapter(
-    bot,
-    default_channel=int(CRAFTCORD_DEFAULT_CHANNEL) if CRAFTCORD_DEFAULT_CHANNEL else None,
-    command_responder=_discord_command_responder,
-    event_forwarder=_discord_event_forwarder,
-)
+def _get_default_channel() -> Messageable | None:
+    channel_id = _default_channel_id()
+    if channel_id is None:
+        return None
+    return bot.get_channel(channel_id)
 
 config = ClientConfig(
     host=CRAFTCORD_HOST,
@@ -80,7 +65,6 @@ craft = Client(
     port=CRAFTCORD_PORT,
     token=CRAFTCORD_TOKEN,
     transport=transport,
-    discord_adapter=adapter,
     config=config,
 )
 
@@ -116,6 +100,24 @@ async def on_player_chat(event: PlayerChatEvent) -> None:
             "Discord bridge is online.",
             target=event.player.username,
         )
+
+
+@craft.event("server_start")
+async def on_server_start(event: ServerStartEvent) -> None:
+    channel = _get_default_channel()
+    if channel is None:
+        logger.warning("CRAFTCORD_DEFAULT_CHANNEL is missing or not found; skipping embed")
+        return
+
+    embed = discord.Embed(
+        title="Minecraft Server Started",
+        description="The server is now online.",
+        color=discord.Color.green(),
+    )
+    embed.add_field(name="Version", value=event.version, inline=True)
+    embed.timestamp = event.timestamp
+
+    await channel.send(embed=embed)
 
 
 @craft.on("*")

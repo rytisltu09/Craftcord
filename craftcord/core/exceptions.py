@@ -30,7 +30,3 @@ class CommandNotFoundError(CraftCordError):
 
 class PluginError(CraftCordError):
     pass
-
-
-class DiscordAdapterError(CraftCordError):
-    pass

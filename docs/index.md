@@ -11,10 +11,9 @@ CraftCord is a transport-focused Python SDK that sits between your application a
 
 ## Core Concepts
 
-- `Client`: top-level orchestration object for transports, events, commands, and adapters
+- `Client`: top-level orchestration object for transports, events, and commands
 - `MinecraftClient`: high-level methods for server actions such as command execution and player lookups
 - `Transport`: protocol boundary for WebSocket and HTTP communication with the Java plugin
-- `DiscordAdapter`: bridge to Discord frameworks without coupling CraftCord to a specific bot runtime
 - `PluginManager`: Python-side extension lifecycle manager
 
 See the API reference in `docs/api.md` and the repository root `README.md` for setup examples.

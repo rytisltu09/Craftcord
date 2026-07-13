@@ -9,7 +9,6 @@ from craftcord.core.config import ClientConfig
 from craftcord.core.dispatcher import EventDispatcher
 from craftcord.core.events import BaseEvent, build_event
 from craftcord.core.exceptions import CommandNotFoundError
-from craftcord.discord.adapter import DiscordAdapter, NullDiscordAdapter
 from craftcord.minecraft.client import MinecraftClient
 from craftcord.plugins.manager import PluginManager
 from craftcord.transport.base import Transport
@@ -30,7 +29,6 @@ class Client:
         port: int,
         token: str,
         transport: Transport | TransportFactory | None = None,
-        discord_adapter: DiscordAdapter | None = None,
         config: ClientConfig | None = None,
     ) -> None:
         self.config = config or ClientConfig(host=host, port=port, token=token)
@@ -43,9 +41,6 @@ class Client:
 
         self.transport = self._build_transport(transport)
         self.transport.set_event_handler(self._handle_transport_event)
-
-        self.discord = discord_adapter or NullDiscordAdapter()
-        self.discord.bind(self)
 
         self.minecraft = MinecraftClient(self)
         self.plugins = PluginManager(self)
@@ -90,7 +85,6 @@ class Client:
             return
         self._started = True
         self._closed.clear()
-        await self.discord.startup()
         await self.transport.connect()
 
     async def start(self) -> None:
@@ -103,7 +97,6 @@ class Client:
         self._started = False
         await self.transport.close()
         await self.plugins.unload_all()
-        await self.discord.shutdown()
         self._closed.set()
 
     async def wait_closed(self) -> None:
@@ -125,14 +118,12 @@ class Client:
     async def _handle_transport_event(self, event_name: str, payload: dict[str, Any]) -> None:
         if event_name == "command_request":
             command_name = str(payload.get("command", ""))
-            result = await self.invoke_command(
+            await self.invoke_command(
                 command_name,
                 *(payload.get("args") or []),
                 **(payload.get("kwargs") or {}),
             )
-            await self.discord.respond(command_name, result)
             return
 
         event = build_event(event_name, payload)
         await self._dispatcher.dispatch(event_name, event)
-        await self.discord.forward_event(event)

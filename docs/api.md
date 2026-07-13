@@ -2,7 +2,7 @@
 
 ## Client
 
-`Client` coordinates connection lifecycle, event dispatching, Minecraft operations, and Discord adapters.
+`Client` coordinates connection lifecycle, event dispatching, and Minecraft operations.
 
 ### Connection Configuration
 
@@ -47,7 +47,7 @@ async def online_command() -> list[str]:
 
 - `await client.connect()` connects without blocking the rest of your application
 - `await client.start()` connects and waits until the client is closed
-- `await client.close()` shuts down transports, adapters, and extensions cleanly
+- `await client.close()` shuts down transports and extensions cleanly
 
 ## MinecraftClient
 
@@ -77,6 +77,6 @@ Each event arrives as a typed object when CraftCord knows the schema, or as `Gen
 - `WebSocketTransport` is the primary transport and supports events, reconnects, heartbeats, and request-response messaging
 - `HTTPTransport` supports authenticated RPC-style requests against a REST endpoint
 
-## Discord Adapters
+## Discord Integration
 
-`DiscordAdapter` is the contract. `DiscordPyAdapter` integrates with `discord.py` by sending messages to configured channels and optionally forwarding results or events to your bot runtime.
+CraftCord no longer ships a built-in Discord adapter. Integrate events and commands directly in your own bot runtime (for example, with `discord.py`) by registering CraftCord event handlers and sending messages with your bot client.
